@@ -6,77 +6,134 @@
 #include "scanner.h"
 
 // character clases
-#define SPACE       0       // 
-#define TAB         1
-#define NEWLINE     2       // \n
-#define DIGIT       3       // 0123456789
-#define LETTER      4       // abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ
-#define UNDERSCORE  5       // _
-#define PERIOD      6       // .
-#define E           7       // e/E
-#define PLUS        8       // +
-#define MINUS       9       // -
-#define DOUBLEQOUTE 10      // "
-#define SLASH       11      // /
-#define COLON       12      // :
-#define EQUAL       13      // =
-#define SEMICOLON   14      // ;
-#define COMMA       15      // ,
-#define ASTERISK    16      // *
-#define LEFTANGLE   17      // <
-#define RIGHTANGLE  18      // >
-#define EXCLAMATION 19      // !
-#define LEFTPAREN   20      // (
-#define RIGHTPAREN  21      // )
-#define EOF_C         22      // eof
-#define OTHER       23      // other symbols that may be printable
+#define SPACE 0 //
+#define TAB 1
+#define NEWLINE 2      // \n
+#define DIGIT 3        // 0123456789
+#define LETTER 4       // abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ
+#define UNDERSCORE 5   // _
+#define PERIOD 6       // .
+#define E 7            // e/E
+#define PLUS 8         // +
+#define MINUS 9        // -
+#define DOUBLEQOUTE 10 // "
+#define SLASH 11       // /
+#define COLON 12       // :
+#define EQUAL 13       // =
+#define SEMICOLON 14   // ;
+#define COMMA 15       // ,
+#define ASTERISK 16    // *
+#define LEFTANGLE 17   // <
+#define RIGHTANGLE 18  // >
+#define EXCLAMATION 19 // !
+#define LEFTPAREN 20   // (
+#define RIGHTPAREN 21  // )
+#define EOF_C 22       // eof
+#define OTHER 23       // other symbols that may be printable
 
 // refer to DFA
-int delta[32][24];
+int delta[NUMSTATES][24];
 
-void generatetable() {
-    for (int s = 0; s < 32; s++)
+void generatetable()
+{
+    for (int s = 0; s < NUMSTATES; s++)
     {
-        for (int c = 0; c < 24; c++) 
+        for (int c = 0; c < OTHER + 1; c++)
         {
             delta[s][c] = ERROR;
         }
     }
     // prev_state char      next_state
-    delta[0][SPACE] =       0;
-    delta[0][TAB] =         0;
-    delta[0][NEWLINE] =     0;
-    delta[0][LETTER] =      IDENTIFIER;
-    delta[0][UNDERSCORE] =  IDENTIFIER;
-    delta[0][DIGIT] =       NUMBER;
-    delta[0][DOUBLEQOUTE] = 1;
-    delta[0][SLASH] =       DIVIDE;
-    delta[0][COLON] =       COLON_S;
-    delta[0][SEMICOLON] =   SEMICOLON_S;
-    delta[0][PLUS] =        PLUS_S;
-    delta[0][MINUS] =       MINUS_S;
-    delta[0][COMMA] =       COMMA_S;
-    delta[0][ASTERISK] =    MULTIPLY;
-    delta[0][LEFTANGLE] =   LESSTHAN;
-    delta[0][EQUAL] =       EQUAL_S;
-    delta[0][RIGHTANGLE] =  GREATERTHAN;
-    delta[0][EXCLAMATION] = 4;
-    delta[0][RIGHTPAREN] =  RIGHTPAREN_S;
-    delta[0][LEFTPAREN] =   LEFTPAREN_S;
-    delta[0][EOF_C] =       EOF_S;
+    // empty
+    delta[0][SPACE] = 0;
+    delta[0][TAB] = 0;
+    delta[0][NEWLINE] = 0;
 
+    // identifiers
+    delta[0][LETTER] = IDENTIFIER;
+    delta[0][E] = IDENTIFIER;
+    delta[0][UNDERSCORE] = IDENTIFIER;
     delta[IDENTIFIER][LETTER] = IDENTIFIER;
-    delta[IDENTIFIER][DIGIT]  = IDENTIFIER;
+    delta[IDENTIFIER][E] = IDENTIFIER;
+    delta[IDENTIFIER][DIGIT] = IDENTIFIER;
     delta[IDENTIFIER][UNDERSCORE] = IDENTIFIER;
-    
-    delta[NUMBER][DIGIT]    = NUMBER;
-    delta[NUMBER][E]        = 5;
-    delta[NUMBER][PERIOD]   = DECIMAL;
 
-    // TODO: FIX TOMROW (FINALIZE DFA)
+    // numbers
+    delta[0][DIGIT] = NUMBER;
+    delta[NUMBER][DIGIT] = NUMBER;
+    delta[NUMBER][E] = 5;
+    delta[NUMBER][PERIOD] = 6;
+    delta[6][DIGIT] = DECIMAL;
+    delta[DECIMAL][DIGIT] = DECIMAL;
+    delta[DECIMAL][E] = 5;
+    delta[5][PLUS] = 7;
+    delta[5][MINUS] = 7;
+    delta[5][DIGIT] = EXPONENTIAL;
+    delta[7][DIGIT] = EXPONENTIAL;
+    delta[EXPONENTIAL][DIGIT] = EXPONENTIAL;
+
+    // String
+    delta[0][DOUBLEQOUTE] = 1;
+    for (int c = 0; c < OTHER + 1; c++)
+    {
+        delta[1][c] = 1; // any character included in string
+    }
+    delta[1][DOUBLEQOUTE] = STRING;
+    delta[1][NEWLINE] = ERROR; // expected ' " ', string cannot be multiline
+    delta[1][EOF_C] = ERROR;   // unterminated String 
+
+    // Divide/Comments
+    delta[0][SLASH] = DIVIDE;
+    delta[DIVIDE][SLASH] = 2;
+    for (int c = 0; c < OTHER + 1; c++)
+    {
+        delta[2][c] = 2; // ignore everything
+        // state 3 was also supposed to be used in here. but DFA simplified it and removed it
+        // might update 4 5 6 to 3 4 5 later. (probably not)
+    }
+    delta[2][NEWLINE] = COMMENT;
+    delta[2][EOF_C] = EOF_S;
+
+    // Assign
+    delta[0][COLON] = COLON_S;
+    delta[COLON_S][EQUAL] = ASSIGN;
+
+    // Semicolon
+    delta[0][SEMICOLON] = SEMICOLON_S;
+
+    // Plus Minus and Comma
+    delta[0][PLUS] = PLUS_S;
+    delta[0][MINUS] = MINUS_S;
+    delta[0][COMMA] = COMMA_S;
+
+    // Multiply/Raise
+    delta[0][ASTERISK] = MULTIPLY;
+    delta[MULTIPLY][ASTERISK] = RAISE;
+
+    // Comparison Operators
+    // LT, LETEQUAL
+    delta[0][LEFTANGLE] = LESSTHAN;
+    delta[LESSTHAN][EQUAL] = LTEQUAL;
+
+    // GT. GTEQUAL
+    delta[0][RIGHTANGLE] = GREATERTHAN;
+    delta[GREATERTHAN][EQUAL] = GTEQUAL;
+    
+    // Equal  Not Equal
+    delta[0][EQUAL] = EQUAL_S;
+    delta[0][EXCLAMATION] = 4;
+    delta[4][EQUAL] = NOTEQUAL;
+
+    // Parenthesis
+    delta[0][LEFTPAREN] = LEFTPAREN_S;
+    delta[0][RIGHTPAREN] = RIGHTPAREN_S; 
+
+    // end of file
+    delta[0][EOF_C] = EOF_S;
+
 }
 
-#define MAXLINELEN  1000
+#define MAXLINELEN 1000
 FILE *file;
 static int linenum = 1;
 char line[MAXLINELEN];
@@ -121,38 +178,60 @@ int getlinenumber()
 
 int charclass(char c)
 {
-    if ((c >= '0') && (c <= '9')) return DIGIT;
-    if ((c == 'e') || (c == 'E')) return E;
-    if ((c >= 'a') && (c <= 'z')) return LETTER;
-    if ((c >= 'A') && (c <= 'Z')) return LETTER;
-    switch(c)
+    if ((c >= '0') && (c <= '9'))
+        return DIGIT;
+    if ((c == 'e') || (c == 'E'))
+        return E;
+    if ((c >= 'a') && (c <= 'z'))
+        return LETTER;
+    if ((c >= 'A') && (c <= 'Z'))
+        return LETTER;
+    switch (c)
     {
-        case  ' ': return SPACE;
-        case '\r':
-        case '\n': return NEWLINE;
-        case '\t': return TAB;
-        case  EOF: return EOF_C;
-        case  '=': return EQUAL;
-        case  '+': return PLUS;
-        case  '-': return MINUS;
-        case  '*': return ASTERISK;
-        case  '<': return LEFTANGLE;
-        case  '>': return RIGHTANGLE;
-        case  '(': return LEFTPAREN;
-        case  ')': return RIGHTPAREN;
-        case  '/': return SLASH;
-        case  '!': return EXCLAMATION;
-        case  '.': return PERIOD;
-        case  '"': return DOUBLEQOUTE;
-        case  ',': return COMMA;
-        case  ';': return SEMICOLON;
-        default  : return OTHER;
+    case ' ':
+        return SPACE;
+    case '\r':
+    case '\n':
+        return NEWLINE;
+    case '\t':
+        return TAB;
+    case EOF:
+        return EOF_C;
+    case '=':
+        return EQUAL;
+    case '+':
+        return PLUS;
+    case '-':
+        return MINUS;
+    case '*':
+        return ASTERISK;
+    case '<':
+        return LEFTANGLE;
+    case '>':
+        return RIGHTANGLE;
+    case '(':
+        return LEFTPAREN;
+    case ')':
+        return RIGHTPAREN;
+    case '/':
+        return SLASH;
+    case '!':
+        return EXCLAMATION;
+    case '.':
+        return PERIOD;
+    case '"':
+        return DOUBLEQOUTE;
+    case ',':
+        return COMMA;
+    case ';':
+        return SEMICOLON;
+    default:
+        return OTHER;
     }
 }
 
 const char *errormessage(int errnum)
 {
-
 }
 
 struct token gettoken()
@@ -162,21 +241,25 @@ struct token gettoken()
     temp.lexeme[0] = '\0';
     char buf[2] = {0, 0};
 
-    do {
+    do
+    {
         char c = mygetchar();
         int ch = charclass(c);
         prevstate = state;
         state = delta[state][ch];
 
-        if (state == 0) {
-            temp.lexeme[0] = '\0';      // still skipping whitespace
-        } else if (state != ERROR) {
+        if (state == 0)
+        {
+            temp.lexeme[0] = '\0'; // still skipping whitespace
+        }
+        else if (state != ERROR)
+        {
             buf[0] = c;
             strcat(temp.lexeme, buf);
         }
-    } while (state != ERROR && state != EOF_S);
+    } while (state < ERROR && state != EOF_S);
 
-    pushback = TRUE;      // put back the char that caused ERROR/final transition
-    temp.id = prevstate;  // the last *valid* state is the token type
+    pushback = TRUE;     // put back the char that caused ERROR/final transition
+    temp.id = prevstate; // the last *valid* state is the token type
     return temp;
 }
