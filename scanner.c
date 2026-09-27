@@ -142,7 +142,7 @@ char line[MAXLINELEN];
 int len = 0;
 int ptr = 1;
 int pushback = FALSE;
-char charread = '\0';
+static int lastch = 0;
 
 int openfile(char *filename)
 {
@@ -156,7 +156,7 @@ int openfile(char *filename)
     return 0;
 }
 
-char mygetchar()
+int mygetchar()
 {
     if (pushback)
     {
@@ -164,13 +164,13 @@ char mygetchar()
     }
     else
     {
-        charread = fgetc(file);
-        if (charread == '\n')
+        lastch = fgetc(file);
+        if (lastch == '\n')
         {
             linenum++;
         }
     }
-    return charread;
+    return lastch;
 }
 
 int getlinenumber()
@@ -178,8 +178,9 @@ int getlinenumber()
     return linenum;
 }
 
-int charclass(char c)
+int charclass(int c)
 {
+    if (c == EOF) return EOF_C;
     if ((c >= '0') && (c <= '9'))
         return DIGIT;
     if ((c == 'e') || (c == 'E'))
@@ -246,7 +247,7 @@ struct token gettoken()
 
     do
     {
-        char c = mygetchar();
+        int c = mygetchar();
         lastchar = c;
         int ch = charclass(c);
         prevstate = state;
@@ -256,7 +257,7 @@ struct token gettoken()
         {
             temp.lexeme[0] = '\0'; // skip whitespace
         }
-        else if (state < ERROR)
+        else if (state < ERROR && ch != EOF_C)
         {
             buf[0] = c;
             strcat(temp.lexeme, buf);
