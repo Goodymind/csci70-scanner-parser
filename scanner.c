@@ -131,6 +131,8 @@ void generatetable()
     // end of file
     delta[0][EOF_C] = EOF_S;
 
+    // unexpected characters
+    delta[0][OTHER] = ERROR;
 }
 
 #define MAXLINELEN 1000
@@ -240,26 +242,46 @@ struct token gettoken()
     struct token temp;
     temp.lexeme[0] = '\0';
     char buf[2] = {0, 0};
+    char lastchar = '\0';
 
     do
     {
         char c = mygetchar();
+        lastchar = c;
         int ch = charclass(c);
         prevstate = state;
         state = delta[state][ch];
 
         if (state == 0)
         {
-            temp.lexeme[0] = '\0'; // still skipping whitespace
+            temp.lexeme[0] = '\0'; // skip whitespace
         }
-        else if (state != ERROR)
+        else if (state < ERROR)
         {
             buf[0] = c;
             strcat(temp.lexeme, buf);
         }
-    } while (state < ERROR && state != EOF_S);
+    } while (state < ERROR);
 
-    pushback = TRUE;     // put back the char that caused ERROR/final transition
-    temp.id = prevstate; // the last *valid* state is the token type
+    if (prevstate == 0)
+    {
+        // required because a random character after state 0 would be pushback = true otherwise
+        buf[0] = lastchar;
+        temp.lexeme[0] = buf[0];    // consume the offending characcter
+        temp.lexeme[1] = '\0';
+        pushback = FALSE;
+        temp.id = ERROR;
+    }
+    else if (prevstate < 10)
+    {
+        pushback = TRUE;
+        temp.id = ERROR;
+    }
+    else
+    {
+        pushback = TRUE;
+        temp.id = prevstate;
+    }
+
     return temp;
 }
