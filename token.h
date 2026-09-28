@@ -32,4 +32,6 @@ extern const char *tokennames[];
 #define RIGHTPAREN_S 32
 #define EOF_S       33
 #define ERROR       34
+// TODO: Implement Specific Error messages
+// #define ERROR_UNEXPECTED_EOF 35
 #define NUMSTATES   50

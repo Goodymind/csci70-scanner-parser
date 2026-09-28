@@ -16,6 +16,7 @@ int main(int argc, char** argv)
     struct token t = gettoken();
     while (t.id != EOF_S)
     {
+        // TODO: Call tokennames here
         printf("%d\t\t%s\n", t.id, t.lexeme);
         t = gettoken();
     }
