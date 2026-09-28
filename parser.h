@@ -3,7 +3,7 @@ void blk();
 void stm();
 void argfollow();
 void arg();
-void ifollow();
+void iffollow();
 void exp();
 void trmfollow();
 void trm();
