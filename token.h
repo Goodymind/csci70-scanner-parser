@@ -4,8 +4,6 @@ struct token
     char lexeme[1000];
 };
 
-extern const char *tokennames[];
-
 // state definitions
 #define IDENTIFIER  10
 #define NUMBER      11
@@ -33,5 +31,12 @@ extern const char *tokennames[];
 #define EOF_S       33
 #define ERROR       34
 // TODO: Implement Specific Error messages
-// #define ERROR_UNEXPECTED_EOF 35
-#define NUMSTATES   50
+// TODO: Implement IDs
+#define IF          45
+#define NUMSTATES   60
+
+extern const char *tokennames[NUMSTATES];
+extern void generatetokennames();
+
+extern const char *keywords[];
+extern int *check_keyword(char *iden);

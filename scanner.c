@@ -72,6 +72,8 @@ void generatetable()
     delta[7][DIGIT] = EXPONENTIAL;
     delta[EXPONENTIAL][DIGIT] = EXPONENTIAL;
 
+    // numbers- EXPECTED DIGIT
+
     // String
     delta[0][DOUBLEQOUTE] = 1;
     for (int c = 0; c < OTHER + 1; c++)
@@ -80,7 +82,7 @@ void generatetable()
     }
     delta[1][DOUBLEQOUTE] = STRING;
     delta[1][NEWLINE] = ERROR; // expected ' " ', string cannot be multiline
-    delta[1][EOF_C] = ERROR;   // unterminated String 
+    delta[1][EOF_C] = ERROR;   // unterminated String
 
     // Divide/Comments
     delta[0][SLASH] = DIVIDE;
@@ -91,7 +93,10 @@ void generatetable()
         // state 3 was also supposed to be used in here. but DFA simplified it and removed it
         // might update 4 5 6 to 3 4 5 later. (probably not)
     }
-    delta[2][NEWLINE] = COMMENT;
+    // Ignore Comments
+    // delta[2][NEWLINE] = COMMENT;
+    // TODO: Edit DFA... or not?
+    delta[2][NEWLINE] = 0;
     delta[2][EOF_C] = EOF_S;
 
     // Assign
@@ -118,7 +123,7 @@ void generatetable()
     // GT. GTEQUAL
     delta[0][RIGHTANGLE] = GREATERTHAN;
     delta[GREATERTHAN][EQUAL] = GTEQUAL;
-    
+
     // Equal  Not Equal
     delta[0][EQUAL] = EQUAL_S;
     delta[0][EXCLAMATION] = 4;
@@ -126,7 +131,7 @@ void generatetable()
 
     // Parenthesis
     delta[0][LEFTPAREN] = LEFTPAREN_S;
-    delta[0][RIGHTPAREN] = RIGHTPAREN_S; 
+    delta[0][RIGHTPAREN] = RIGHTPAREN_S;
 
     // end of file
     delta[0][EOF_C] = EOF_S;
@@ -180,7 +185,8 @@ int getlinenumber()
 
 int charclass(int c)
 {
-    if (c == EOF) return EOF_C;
+    if (c == EOF)
+        return EOF_C;
     if ((c >= '0') && (c <= '9'))
         return DIGIT;
     if ((c == 'e') || (c == 'E'))
@@ -228,6 +234,8 @@ int charclass(int c)
         return COMMA;
     case ';':
         return SEMICOLON;
+    case ':':
+        return COLON;
     default:
         return OTHER;
     }
@@ -236,6 +244,27 @@ int charclass(int c)
 const char *errormessage(int errnum)
 {
     // TODO: Implement error messages and error handling
+    // Lexical analysis scans the source code, filters out white spaces and comments, identifies lexical errors,
+    // and converts the code into a stream of tokens
+    //
+    // You can also ask sir.
+    //
+    // Make error messages
+    // - State 1: Expected " (Unfinished String)
+    // - State 2: Comments, so skip.
+    // - State 3: Unused
+    // - State 4: Expected =
+    // - State 5: Incomplete Exponential Expression (or missing exponent)
+    // - State 6: Incomplete Decimal Expression
+    // - State 7: Incomplete Exponential Expression (or missing exponent)
+    // - State 8: Unused
+    // - State 9: Unused
+    // (Optional) Additional Errors for other DFA states, some good examples can be
+    // - State 35: Unexpected EOF
+    // - State 36: Expected Digit "1a, 7345.123a, 3587ea" (Sir said this is grammar though, so this is unecessary)
+    // - and if you can think of any more
+    // regarding the string names of the errors, you can
+    // - define it in token.h 1-9 so that it automatically replaces it.
 }
 
 struct token gettoken()
@@ -254,9 +283,9 @@ struct token gettoken()
         prevstate = state;
         state = delta[state][ch];
 
-        if (state == 0)
+        if (state == 0 || state == 2)
         {
-            temp.lexeme[0] = '\0'; // skip whitespace
+            temp.lexeme[0] = '\0'; // skip whitespace and comments;
         }
         else if (state < ERROR && ch != EOF_C)
         {
@@ -265,11 +294,31 @@ struct token gettoken()
         }
     } while (state < ERROR);
 
+    if (state > ERROR)
+    {
+        // here if ur implementing errors for states 34-44
+        // otherwise just remove this
+        /*
+            temp.id = state;
+        if (state == ERR_UNEXPECTED_EOF)
+        {
+            pushback = TRUE;                 // leave EOF so the next call returns EOF_S
+        }
+        else
+        {
+            size_t n = strlen(temp.lexeme);  // keep the offending char in the lexeme
+            temp.lexeme[n] = (char)lastchar;
+            temp.lexeme[n + 1] = '\0';
+            pushback = FALSE;                // consume it, so no stall
+        }
+        */
+    }
+
     if (prevstate == 0)
     {
         // required because a random character after state 0 would be pushback = true otherwise
         buf[0] = lastchar;
-        temp.lexeme[0] = buf[0];    // consume the offending characcter
+        temp.lexeme[0] = buf[0]; // consume the offending characcter
         temp.lexeme[1] = '\0';
         pushback = FALSE;
         temp.id = ERROR;
@@ -278,6 +327,18 @@ struct token gettoken()
     {
         pushback = TRUE;
         temp.id = ERROR;
+        // add error handling here
+        // maybe temp.id = temp.prevstate
+    }
+    else if (prevstate == IDENTIFIER)
+    {
+        pushback = TRUE;
+        temp.id = prevstate;
+        // TODO: Implement Keywords
+        // instead of temp.id = prevstate;
+        // keyword.id = check_keyword(temp.lexeme);
+        // if keyword.id == -1...
+        //   temp.id = IF
     }
     else
     {
