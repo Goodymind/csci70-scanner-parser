@@ -235,6 +235,7 @@ int charclass(int c)
 
 const char *errormessage(int errnum)
 {
+    // TODO: Implement error messages and error handling
 }
 
 struct token gettoken()
