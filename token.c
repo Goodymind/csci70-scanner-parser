@@ -31,6 +31,13 @@ void generatetokennames() {
     tokennames[ERROR] = "Error: Unexpected Character";
     // TODO: Finish this
 
+    // Specific errors
+    tokennames[1] = "Error: Unterminated String";
+    tokennames[4] = "Error: Expected =";
+    tokennames[5] = "Error: Incomplete Exponential";
+    tokennames[6] = "Error: Incomplete Decimal";
+    tokennames[7] = "Error: Incomplete Exponential";
+
     // keywords
     tokennames[IF] = "If";
     tokennames[ELSE] = "Else";
