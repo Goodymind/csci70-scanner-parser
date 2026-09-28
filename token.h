@@ -31,12 +31,20 @@ struct token
 #define EOF_S       33
 #define ERROR       34
 // TODO: Implement Specific Error messages
+
 // TODO: Implement IDs
 #define IF          45
+#define ELSE        46
+#define ENDIF       47
+#define PRINT       48
+#define SQRT        49
+#define AND         50
+#define OR          51
+#define NOT         52
 #define NUMSTATES   60
 
 extern const char *tokennames[NUMSTATES];
 extern void generatetokennames();
 
 extern const char *keywords[];
-extern int *check_keyword(char *iden);
+extern int check_keyword(char *iden);
