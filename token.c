@@ -50,10 +50,10 @@ void generatetokennames() {
 }
 
 const char *keywords[] = {
-    "PRINT",
     "IF",
     "ELSE",
     "ENDIF",
+    "PRINT",
     "SQRT",
     "AND",
     "OR",
