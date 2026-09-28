@@ -58,7 +58,6 @@ void generatetable()
     delta[IDENTIFIER][DIGIT] = IDENTIFIER;
     delta[IDENTIFIER][UNDERSCORE] = IDENTIFIER;
 
-
     // numbers
     delta[0][DIGIT] = NUMBER;
     delta[NUMBER][DIGIT] = NUMBER;
@@ -250,20 +249,20 @@ const char *errormessage(int errnum)
     //
     // You can also ask sir.
     //
-    // Make error messages for states 1-9
+    // Make error messages
     // - State 1: Expected " (Unfinished String)
-    // - State 2: There's a *possible* bug where if the character stream is //\n (there are no characters after // just newline) 
-    //          it might throw an error, can you fix if it is a bug
-    // - State 3: Dumbass skipped it
+    // - State 2: Comments, so skip.
+    // - State 3: Unused
     // - State 4: Expected =
     // - State 5: Incomplete Exponential Expression (or missing exponent)
     // - State 6: Incomplete Decimal Expression
     // - State 7: Incomplete Exponential Expression (or missing exponent)
+    // - State 8: Unused
+    // - State 9: Unused
     // (Optional) Additional Errors for other DFA states, some good examples can be
-    // - Unexpected EOF
-    // - Expected Digit "1a, 7345.123a, 3587ea" (Sir said this is grammar though)
+    // - State 35: Unexpected EOF
+    // - State 36: Expected Digit "1a, 7345.123a, 3587ea" (Sir said this is grammar though, so this is unecessary)
     // - and if you can think of any more
-    // 
     // regarding the string names of the errors, you can
     // - define it in token.h 1-9 so that it automatically replaces it.
 }
@@ -295,6 +294,26 @@ struct token gettoken()
         }
     } while (state < ERROR);
 
+    if (state > ERROR)
+    {
+        // here if ur implementing errors for states 34-44
+        // otherwise just remove this
+        /*
+            temp.id = state;
+        if (state == ERR_UNEXPECTED_EOF)
+        {
+            pushback = TRUE;                 // leave EOF so the next call returns EOF_S
+        }
+        else
+        {
+            size_t n = strlen(temp.lexeme);  // keep the offending char in the lexeme
+            temp.lexeme[n] = (char)lastchar;
+            temp.lexeme[n + 1] = '\0';
+            pushback = FALSE;                // consume it, so no stall
+        }
+        */
+    }
+
     if (prevstate == 0)
     {
         // required because a random character after state 0 would be pushback = true otherwise
@@ -308,13 +327,8 @@ struct token gettoken()
     {
         pushback = TRUE;
         temp.id = ERROR;
-        // add a printf(errormessage) here
-    }
-    else if (prevstate >= ERROR)
-    {
-        pushback = FALSE;
-        temp.id = prevstate;
-        // or add it here...
+        // add error handling here
+        // maybe temp.id = temp.prevstate
     }
     else if (prevstate == IDENTIFIER)
     {
