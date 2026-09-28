@@ -31,8 +31,9 @@ struct token
 #define EOF_S       33
 #define ERROR       34
 // TODO: Implement Specific Error messages
-#define ERROR_EXPECTED_DIGIT 35
-#define NUMSTATES   50
+// TODO: Implement IDs
+#define IF          45
+#define NUMSTATES   60
 
 extern const char *tokennames[NUMSTATES];
 extern void generatetokennames();

@@ -247,9 +247,25 @@ const char *errormessage(int errnum)
     // TODO: Implement error messages and error handling
     // Lexical analysis scans the source code, filters out white spaces and comments, identifies lexical errors,
     // and converts the code into a stream of tokens
-    // Alinus: I don't know how specific Error handling should be, but if you want to make it specific
-    // Feel free to do so. Just remember to edit DFA.
+    //
     // You can also ask sir.
+    //
+    // Make error messages for states 1-9
+    // - State 1: Expected " (Unfinished String)
+    // - State 2: There's a *possible* bug where if the character stream is //\n (there are no characters after // just newline) 
+    //          it might throw an error, can you fix if it is a bug
+    // - State 3: Dumbass skipped it
+    // - State 4: Expected =
+    // - State 5: Incomplete Exponential Expression (or missing exponent)
+    // - State 6: Incomplete Decimal Expression
+    // - State 7: Incomplete Exponential Expression (or missing exponent)
+    // (Optional) Additional Errors for other DFA states, some good examples can be
+    // - Unexpected EOF
+    // - Expected Digit "1a, 7345.123a, 3587ea" (Sir said this is grammar though)
+    // - and if you can think of any more
+    // 
+    // regarding the string names of the errors, you can
+    // - define it in token.h 1-9 so that it automatically replaces it.
 }
 
 struct token gettoken()
@@ -292,11 +308,13 @@ struct token gettoken()
     {
         pushback = TRUE;
         temp.id = ERROR;
+        // add a printf(errormessage) here
     }
     else if (prevstate >= ERROR)
     {
         pushback = FALSE;
         temp.id = prevstate;
+        // or add it here...
     }
     else if (prevstate == IDENTIFIER)
     {
@@ -306,6 +324,7 @@ struct token gettoken()
         // instead of temp.id = prevstate;
         // keyword.id = check_keyword(temp.lexeme);
         // if keyword.id == -1...
+        //   temp.id = IF
     }
     else
     {
