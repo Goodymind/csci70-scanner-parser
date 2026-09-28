@@ -58,6 +58,7 @@ void generatetable()
     delta[IDENTIFIER][DIGIT] = IDENTIFIER;
     delta[IDENTIFIER][UNDERSCORE] = IDENTIFIER;
 
+
     // numbers
     delta[0][DIGIT] = NUMBER;
     delta[NUMBER][DIGIT] = NUMBER;
@@ -72,6 +73,8 @@ void generatetable()
     delta[7][DIGIT] = EXPONENTIAL;
     delta[EXPONENTIAL][DIGIT] = EXPONENTIAL;
 
+    // numbers- EXPECTED DIGIT
+
     // String
     delta[0][DOUBLEQOUTE] = 1;
     for (int c = 0; c < OTHER + 1; c++)
@@ -80,7 +83,7 @@ void generatetable()
     }
     delta[1][DOUBLEQOUTE] = STRING;
     delta[1][NEWLINE] = ERROR; // expected ' " ', string cannot be multiline
-    delta[1][EOF_C] = ERROR;   // unterminated String 
+    delta[1][EOF_C] = ERROR;   // unterminated String
 
     // Divide/Comments
     delta[0][SLASH] = DIVIDE;
@@ -91,7 +94,10 @@ void generatetable()
         // state 3 was also supposed to be used in here. but DFA simplified it and removed it
         // might update 4 5 6 to 3 4 5 later. (probably not)
     }
-    delta[2][NEWLINE] = COMMENT;
+    // Ignore Comments
+    // delta[2][NEWLINE] = COMMENT;
+    // TODO: Edit DFA... or not?
+    delta[2][NEWLINE] = 0;
     delta[2][EOF_C] = EOF_S;
 
     // Assign
@@ -118,7 +124,7 @@ void generatetable()
     // GT. GTEQUAL
     delta[0][RIGHTANGLE] = GREATERTHAN;
     delta[GREATERTHAN][EQUAL] = GTEQUAL;
-    
+
     // Equal  Not Equal
     delta[0][EQUAL] = EQUAL_S;
     delta[0][EXCLAMATION] = 4;
@@ -126,7 +132,7 @@ void generatetable()
 
     // Parenthesis
     delta[0][LEFTPAREN] = LEFTPAREN_S;
-    delta[0][RIGHTPAREN] = RIGHTPAREN_S; 
+    delta[0][RIGHTPAREN] = RIGHTPAREN_S;
 
     // end of file
     delta[0][EOF_C] = EOF_S;
@@ -180,7 +186,8 @@ int getlinenumber()
 
 int charclass(int c)
 {
-    if (c == EOF) return EOF_C;
+    if (c == EOF)
+        return EOF_C;
     if ((c >= '0') && (c <= '9'))
         return DIGIT;
     if ((c == 'e') || (c == 'E'))
@@ -228,6 +235,8 @@ int charclass(int c)
         return COMMA;
     case ';':
         return SEMICOLON;
+    case ':':
+        return COLON;
     default:
         return OTHER;
     }
@@ -236,6 +245,11 @@ int charclass(int c)
 const char *errormessage(int errnum)
 {
     // TODO: Implement error messages and error handling
+    // Lexical analysis scans the source code, filters out white spaces and comments, identifies lexical errors,
+    // and converts the code into a stream of tokens
+    // Alinus: I don't know how specific Error handling should be, but if you want to make it specific
+    // Feel free to do so. Just remember to edit DFA.
+    // You can also ask sir.
 }
 
 struct token gettoken()
@@ -254,9 +268,9 @@ struct token gettoken()
         prevstate = state;
         state = delta[state][ch];
 
-        if (state == 0)
+        if (state == 0 || state == 2)
         {
-            temp.lexeme[0] = '\0'; // skip whitespace
+            temp.lexeme[0] = '\0'; // skip whitespace and comments;
         }
         else if (state < ERROR && ch != EOF_C)
         {
@@ -269,7 +283,7 @@ struct token gettoken()
     {
         // required because a random character after state 0 would be pushback = true otherwise
         buf[0] = lastchar;
-        temp.lexeme[0] = buf[0];    // consume the offending characcter
+        temp.lexeme[0] = buf[0]; // consume the offending characcter
         temp.lexeme[1] = '\0';
         pushback = FALSE;
         temp.id = ERROR;
@@ -278,6 +292,20 @@ struct token gettoken()
     {
         pushback = TRUE;
         temp.id = ERROR;
+    }
+    else if (prevstate >= ERROR)
+    {
+        pushback = FALSE;
+        temp.id = prevstate;
+    }
+    else if (prevstate == IDENTIFIER)
+    {
+        pushback = TRUE;
+        temp.id = prevstate;
+        // TODO: Implement Keywords
+        // instead of temp.id = prevstate;
+        // keyword.id = check_keyword(temp.lexeme);
+        // if keyword.id == -1...
     }
     else
     {

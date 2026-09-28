@@ -11,13 +11,14 @@ int main(int argc, char** argv)
     openfile(filename);
     printf("Starting...\n");
     printf("Input: %s\n", filename);
-    printf("Identifier\t\tDiscriminant\n");
+    printf("Identifier\tDiscriminant\n");
     generatetable();
+    generatetokennames();
     struct token t = gettoken();
     while (t.id != EOF_S)
     {
         // TODO: Call tokennames here
-        printf("%d\t\t%s\n", t.id, t.lexeme);
+        printf("%s\t\t%s\n", tokennames[t.id], t.lexeme);
         t = gettoken();
     }
     return 0;

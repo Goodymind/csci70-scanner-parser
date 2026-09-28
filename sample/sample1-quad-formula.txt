@@ -10,3 +10,8 @@ ELSE // discriminant is negative
    PRINT("no real roots");
 ENDIF;
 PRINT("end of program");
+
+1e3
+1e+5
+1e-5
+1E4
