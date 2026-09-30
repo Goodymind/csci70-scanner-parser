@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include "scanner.h"
 #include "parser.h"
+#include "token.h"
 
 void parseerror(char *message)
 {
@@ -35,27 +36,45 @@ void blk()
 {
     if (currenttoken.id == IDENTIFIER || currenttoken.id == PRINT || currenttoken.id == IF)
     {
-        {
-            stm();
-            blk();
-        }
+
+        stm();
+        blk();
+    }
+    else
+    {
+        //epsilon
     }
 }
-    void stm()
+void stm()
+{
+    switch (currenttoken.id)
     {
-        switch (currenttoken.id)
-        {
-            case IDENTIFIER: match(IDENTIFIER); match(ASSIGN); exp(); match(SEMICOLON_S);
-            case PRINT: match(LEFTPAREN_S); arg(); argfollow(); match(RIGHTPAREN_S); match(SEMICOLON_S);
-            case IF: match(IF); cnd(); match(COLON_S); blk(); iffollow();
-        }
+    case IDENTIFIER:
+        match(IDENTIFIER);
+        match(ASSIGN);
+        exp();
+        match(SEMICOLON_S);
+    case PRINT:
+        match(PRINT);
+        match(LEFTPAREN_S);
+        arg();
+        argfollow();
+        match(RIGHTPAREN_S);
+        match(SEMICOLON_S);
+    case IF:
+        match(IF);
+        cnd();
+        match(COLON_S);
+        blk();
+        iffollow();
     }
+}
 
-    void parse(char *filename)
-    {
-        openfile(filename);
-        printf("Starting Parse...\n");
-        generatetable();
+void parse(char *filename)
+{
+    openfile(filename);
+    printf("Starting Parse...\n");
+    generatetable();
 
-        return prg();
-    }
+    return prg();
+}
