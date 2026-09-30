@@ -1,0 +1,81 @@
+Input: samp3.txt
+Identifier	Discriminant
+Identifier		a
+Error: Unexpected Character		_
+If		IF
+Else		ELSE
+EndIf		ENDIF
+Sqrt		SQRT
+Print		PRINT
+And		AND
+Or		OR
+Not		NOT
+Number		123211231
+Decimal		98.3243246
+Error: Unexpected Character		.
+Number		71
+Error at line 6: Incomplete Decimal "73."
+Incomplete Decimal		73.
+Error at line 7: Incomplete Exponential "55.2e"
+Incomplete Exponential		55.2e
+Exponential		111.222e333
+Error: Unexpected Character		.
+Number		444
+Exponential		9.8E+7
+Plus		+
+Exponential		6.5e4
+Plus		+
+Exponential		3e+21
+Error: Unexpected Character		.
+Exponential		1e1
+Error: Unexpected Character		.
+Error at line 10: Incomplete Decimal "1."
+Incomplete Decimal		1.
+Identifier		e
+Error: Unexpected Character		.
+Number		1
+Identifier		e
+Plus		+
+Identifier		e
+String		"you are a test sentence"
+Semicolon		;
+Identifier		if
+Identifier		else
+Identifier		endif
+Identifier		sqrt
+Identifier		print
+Identifier		and
+Identifier		or
+Identifier		not
+Number		5213
+Identifier		y
+Colon		:
+Semicolon		;
+Equal		=
+Assign		:=
+Semicolon		;
+Colon		:
+Error: Unexpected Character		_
+Identifier		x
+Error: Unexpected Character		_
+Number		5
+Plus		+
+Number		5
+Plus		+
+Number		5
+Identifier		you
+Identifier		are
+Identifier		another
+Identifier		test
+Identifier		sentence
+Error: Unexpected Character		.
+Number		1
+Raise		**
+Number		3
+Raise		**
+Number		1
+Number		3
+Minus		-
+Number		4
+Plus		+
+Number		1
