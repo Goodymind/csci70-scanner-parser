@@ -1,8 +1,11 @@
 #include <string.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include "scanner.h"
 #include "parser.h"
 #include "token.h"
+
+char* fname;
 
 void parseerror(char *message)
 {
@@ -16,11 +19,12 @@ void match(int expected)
 {
     if (currenttoken.id == expected)
     {
+        // printf("success! %s is a %s\n", currenttoken.lexeme, tokennames[currenttoken.id]);
         currenttoken = gettoken();
     }
     else
     {
-        printf("syntax error at line %d: expected %s, got id=%d (%s)",
+        printf("syntax error at line %d: expected %s, got id=%d (%s)\n",
                getlinenumber(), tokennames[expected], currenttoken.id, tokennames[currenttoken.id]);
         exit(1);
     }
@@ -28,8 +32,10 @@ void match(int expected)
 
 void prg()
 {
+    // printf("prg: over here...\n");
     blk();
     match(EOF_S);
+    printf("%s is a valid SimpCalc program\n", fname);
 }
 
 void blk()
@@ -42,12 +48,13 @@ void blk()
     }
     else
     {
-        //epsilon
+        // epsilon
     }
 }
 
 void stm()
 {
+    // printf("stm: %s\n", tokennames[currenttoken.id]);
     switch (currenttoken.id)
     {
     case IDENTIFIER:
@@ -55,6 +62,8 @@ void stm()
         match(ASSIGN);
         exp();
         match(SEMICOLON_S);
+        printf("Assignment Statement Recognized\n");
+        break;
 
     case PRINT:
         match(PRINT);
@@ -63,22 +72,28 @@ void stm()
         argfollow();
         match(RIGHTPAREN_S);
         match(SEMICOLON_S);
+        printf("Print Statement Recognized\n");
+        break;
 
     case IF:
+        printf("If Statement Recognized\n");
         match(IF);
         cnd();
         match(COLON_S);
         blk();
         iffollow();
-    }
+        printf("If Statement Ends\n");
+        break;
 
     default:
         printf("Invalid Statement\n");
         exit(1);
+    }
 }
 
 void argfollow()
 {
+    // printf("argfollow %s\n", tokennames[currenttoken.id]);
     if (currenttoken.id == COMMA_S)
     {
         match(COMMA_S);
@@ -93,6 +108,7 @@ void argfollow()
 
 void arg()
 {
+    // printf("arg %s\n", tokennames[currenttoken.id]);
     if (currenttoken.id == STRING)
     {
         match(STRING);
@@ -105,6 +121,7 @@ void arg()
 
 void iffollow()
 {
+    // printf("iffollow %s\n", tokennames[currenttoken.id]);
     if (currenttoken.id == ENDIF)
     {
         match(ENDIF);
@@ -126,21 +143,23 @@ void iffollow()
 
 void exp()
 {
+    // printf("exp %s\n", tokennames[currenttoken.id]);
     trm();
     trmfollow();
 }
 
 void trmfollow()
 {
-    if (currenttoken.id == PLUS)
+    // printf("trmfollow %s\n", tokennames[currenttoken.id]);
+    if (currenttoken.id == PLUS_S)
     {
-        match(PLUS);
+        match(PLUS_S);
         trm();
         trmfollow();
     }
-    else if (currenttoken.id == MINUS)
+    else if (currenttoken.id == MINUS_S)
     {
-        match(MINUS);
+        match(MINUS_S);
         trm();
         trmfollow();
     }
@@ -152,12 +171,14 @@ void trmfollow()
 
 void trm()
 {
+    // printf("trm %s\n", tokennames[currenttoken.id]);
     fac();
     facfollow();
 }
 
 void facfollow()
 {
+    // printf("facfollow %s\n", tokennames[currenttoken.id]);
     if (currenttoken.id == MULTIPLY)
     {
         match(MULTIPLY);
@@ -178,12 +199,14 @@ void facfollow()
 
 void fac()
 {
+    // printf("fac %s\n", tokennames[currenttoken.id]);
     lit();
     litfollow();
 }
 
 void litfollow()
 {
+    // printf("litfollow %s\n", tokennames[currenttoken.id]);
     if (currenttoken.id == RAISE)
     {
         match(RAISE);
@@ -198,9 +221,10 @@ void litfollow()
 
 void lit()
 {
-    if (currenttoken.id == MINUS)
+    // printf("lit %s\n", tokennames[currenttoken.id]);
+    if (currenttoken.id == MINUS_S)
     {
-        match(MINUS);
+        match(MINUS_S);
         val();
     }
     else
@@ -211,33 +235,39 @@ void lit()
 
 void val()
 {
+    // printf("val %s\n", tokennames[currenttoken.id]);
     switch (currenttoken.id)
     {
-        case IDENTIFIER:
-            match(IDENTIFIER);
+    case IDENTIFIER:
+        match(IDENTIFIER);
+        break;
 
-        case NUMBER:
-            match(NUMBER);
+    case NUMBER:
+        match(NUMBER);
+        break;
 
-        case SQRT:
-            match(SQRT);
-            match(LEFTPAREN_S);
-            exp();
-            match(RIGHTPAREN_S);
+    case SQRT:
+        match(SQRT);
+        match(LEFTPAREN_S);
+        exp();
+        match(RIGHTPAREN_S);
+        break;
 
-        case LEFTPAREN_S:
-            match(LEFTPAREN_S);
-            exp();
-            match(RIGHTPAREN_S);
+    case LEFTPAREN_S:
+        match(LEFTPAREN_S);
+        exp();
+        match(RIGHTPAREN_S);
+        break;
 
-        default:
-            printf("Invalid Value\n");
-            exit(1);
+    default:
+        printf("Invalid Value\n");
+        exit(1);
     }
 }
 
 void cnd()
 {
+    // printf("cnd %s\n", tokennames[currenttoken.id]);
     exp();
     rel();
     exp();
@@ -245,37 +275,46 @@ void cnd()
 
 void rel()
 {
+    // printf("rel %s\n", tokennames[currenttoken.id]);
     switch (currenttoken.id)
     {
-        case LESSTHAN:
-            match(LESSTHAN);
+    case LESSTHAN:
+        match(LESSTHAN);
+        break;
 
-        case EQUAL:
-            match(EQUAL);
+    case EQUAL_S:
+        match(EQUAL_S);
+        break;
 
-        case GREATERTHAN:
-            match(GREATERTHAN);
+    case GREATERTHAN:
+        match(GREATERTHAN);
+        break;
 
-        case LTEQUAL:
-            match(LTEQUAL);
+    case LTEQUAL:
+        match(LTEQUAL);
+        break;
 
-        case NOTEQUAL:
-            match(NOTEQUAL);
-            
-        case GTEQUAL:
-            match(GTEQUAL);
+    case NOTEQUAL:
+        match(NOTEQUAL);
+        break;
 
-        default:
-            printf("Missing relational operator\n");
-            exit(1);
+    case GTEQUAL:
+        match(GTEQUAL);
+        break;
+
+    default:
+        printf("Missing relational operator\n");
+        exit(1);
     }
 }
 
 void parse(char *filename)
 {
+    fname = filename;
     openfile(filename);
-    printf("Starting Parse...\n");
     generatetable();
-
-    return prg();
+    generatetokennames();
+    printf("Starting Parse...\n");
+    currenttoken = gettoken();
+    prg();
 }

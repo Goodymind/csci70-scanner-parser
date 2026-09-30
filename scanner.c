@@ -152,6 +152,8 @@ char *_filename;
 
 int openfile(char *filename)
 {
+    printf("scanner: opening %s\n", filename);
+
     if (file != NULL)
     {
         fclose(file);
@@ -327,5 +329,11 @@ struct token gettoken()
         temp.id = prevstate;
     }
 
+    if (prevstate == DECIMAL || prevstate == EXPONENTIAL)
+    {
+        temp.id = NUMBER;
+    }
+
+    // printf("scanner getting: %d %s\n", temp.id, tokennames[temp.id]);
     return temp;
 }
