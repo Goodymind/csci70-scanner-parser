@@ -265,6 +265,12 @@ const char *errormessage(int errnum)
     // - and if you can think of any more
     // regarding the string names of the errors, you can
     // - define it in token.h 1-9 so that it automatically replaces it.
+
+    if (errnum < 1 || errnum > 9)
+    {
+        return "Error: Unknown";
+    }
+    return tokennames[errnum];
 }
 
 struct token gettoken()
@@ -326,19 +332,29 @@ struct token gettoken()
     else if (prevstate < 10)
     {
         pushback = TRUE;
-        temp.id = ERROR;
+        temp.id = prevstate;
         // add error handling here
         // maybe temp.id = temp.prevstate
     }
     else if (prevstate == IDENTIFIER)
     {
         pushback = TRUE;
-        temp.id = prevstate;
         // TODO: Implement Keywords
         // instead of temp.id = prevstate;
         // keyword.id = check_keyword(temp.lexeme);
         // if keyword.id == -1...
         //   temp.id = IF
+
+        int keyword = check_keyword(temp.lexeme);
+
+        if (keyword == -1)
+        {
+            temp.id = prevstate; // just an identifier
+        }
+        else
+        {
+            temp.id = keyword;
+        }
     }
     else
     {
