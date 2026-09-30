@@ -32,11 +32,11 @@ void generatetokennames() {
     // TODO: Finish this
 
     // Specific errors
-    tokennames[1] = "Error: Unterminated String";
-    tokennames[4] = "Error: Expected =";
-    tokennames[5] = "Error: Incomplete Exponential";
-    tokennames[6] = "Error: Incomplete Decimal";
-    tokennames[7] = "Error: Incomplete Exponential";
+    tokennames[1] = "Unterminated String";
+    tokennames[4] = "Expected =";
+    tokennames[5] = "Incomplete Exponential";
+    tokennames[6] = "Incomplete Decimal";
+    tokennames[7] = "Incomplete Exponential";
 
     // keywords
     tokennames[IF] = "If";

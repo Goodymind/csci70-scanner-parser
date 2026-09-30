@@ -14,4 +14,4 @@ test: sample/sample1-quad-formula.txt scan_tester.exe
 	./scan_tester.exe
 
 clean:
-	rm *.exe *.o
+	rm *.exe *.o *output.txt
