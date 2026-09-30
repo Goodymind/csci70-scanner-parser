@@ -71,7 +71,7 @@ char *buildoutputfilename(int inputindex, char *filename)
         size_t outputlen = strlen(outputstr); // do not include \0
 
         int target = len - 5;
-        ".txt0";
+        // ".txt0";
 
         char *buf = malloc(len + outputlen);
 
@@ -90,7 +90,45 @@ char *buildoutputfilename(int inputindex, char *filename)
 
 int main(int argc, char **argv)
 {
-    printf("Parsing sample/sample1-quad-formula.txt\n");
-    parse("sample/sample1-quad-formula.txt");
+    DIR *dir = opendir(".");
+
+    if (dir == NULL)
+    {
+        perror("Unable to open directory");
+        return 0;
+    }
+
+    struct dirent *de;
+
+    while ((de = readdir(dir)) != NULL)
+    {
+        if (isinputfile(de->d_name))
+        {
+            int inputstringindex = find_input(de->d_name);
+
+            char *output =
+                buildoutputfilename(inputstringindex, de->d_name);
+
+            if (output == NULL)
+            {
+                perror("Failed to create output filename");
+                continue;
+            }
+
+            if (freopen(output, "w", stdout) == NULL)
+            {
+                perror("Failed to redirect stdout");
+                free(output);
+                continue;
+            }
+
+            parse(de->d_name);
+
+            free(output);
+        }
+    }
+
+    closedir(dir);
+
     return 0;
 }
