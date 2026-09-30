@@ -5,7 +5,8 @@
 #include "parser.h"
 #include "token.h"
 
-char* fname;
+char *fname;
+int valid;
 
 void parseerror(char *message)
 {
@@ -26,16 +27,25 @@ void match(int expected)
     {
         printf("syntax error at line %d: expected %s, got id=%d (%s)\n",
                getlinenumber(), tokennames[expected], currenttoken.id, tokennames[currenttoken.id]);
-        exit(1);
+        valid = 0;
+        // exit(1);
     }
 }
 
 void prg()
 {
     // printf("prg: over here...\n");
+    valid = 1;
     blk();
     match(EOF_S);
-    printf("%s is a valid SimpCalc program\n", fname);
+    if (valid)
+    {
+        printf("%s is a valid SimpCalc program\n", fname);
+    }
+    else
+    {
+        printf("%s is not a valid SimpCalc program\n", fname);
+    }
 }
 
 void blk()
@@ -87,7 +97,9 @@ void stm()
 
     default:
         printf("Invalid Statement\n");
-        exit(1);
+        valid = 0;
+        break;
+        // exit(1);
     }
 }
 
@@ -137,7 +149,8 @@ void iffollow()
     else
     {
         printf("Incomplete IF Statement\n");
-        exit(1);
+        valid = 0;
+        // exit(1);
     }
 }
 
@@ -261,7 +274,9 @@ void val()
 
     default:
         printf("Invalid Value\n");
-        exit(1);
+        valid = 0;
+        break;
+        // exit(1);
     }
 }
 
@@ -304,7 +319,9 @@ void rel()
 
     default:
         printf("Missing relational operator\n");
-        exit(1);
+        valid = 0;
+        break;
+        // exit(1);
     }
 }
 

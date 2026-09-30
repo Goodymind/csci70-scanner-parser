@@ -114,7 +114,7 @@ int main(int argc, char **argv)
                 perror("Failed to create output filename");
                 continue;
             }
-
+            
             if (freopen(output, "w", stdout) == NULL)
             {
                 perror("Failed to redirect stdout");

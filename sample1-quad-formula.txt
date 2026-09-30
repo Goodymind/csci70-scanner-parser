@@ -5,7 +5,7 @@ discriminant := 10**2 - (4*5.5*(-3));
 IF discriminant >= 0:
    root1 := (-10 + SQRT(discriminant))/(2*5.5);
    root2 := (-10 - SQRT(discriminant))/(2*5.5);
-   PRINT("roots are,root1,root2);
+   PRINT("roots are,root1,root2");
 ELSE // discriminant is negative
    PRINT("no real roots");
 ENDIF;
