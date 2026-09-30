@@ -14,3 +14,5 @@ void lit();
 void val();
 void cnd();
 void rel();
+
+void parse(char* filename);
