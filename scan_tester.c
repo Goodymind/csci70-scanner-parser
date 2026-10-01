@@ -87,7 +87,7 @@ char *buildoutputfilename(int inputindex, char *filename)
 int scan(char *filename)
 {
     printf("Input: %s\n", filename);
-    printf("Identifier\tDiscriminant\n");
+    printf("%-40s%-40s\n", "Identifier", "Discriminant");
     openfile(filename);
     generatetable();
     generatetokennames();
@@ -95,7 +95,7 @@ int scan(char *filename)
     while (t.id != EOF_S)
     {
         // TODO: Call tokennames here
-        printf("%s\t\t%s\n", tokennames[t.id], t.lexeme);
+        printf("%-40s%-40s\n", tokennames[t.id], t.lexeme);
         t = gettoken();
     }
     return 0;

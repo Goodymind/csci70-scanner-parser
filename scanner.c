@@ -152,7 +152,7 @@ char *_filename;
 
 int openfile(char *filename)
 {
-    printf("scanner: opening %s\n", filename);
+    // printf("scanner: opening %s\n", filename);
 
     if (file != NULL)
     {
