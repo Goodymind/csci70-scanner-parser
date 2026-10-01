@@ -7,12 +7,7 @@
 
 char *fname;
 int valid;
-
-void parseerror(char *message)
-{
-    printf("Error: %s\n", message);
-    exit(0);
-}
+int errors;
 
 struct token currenttoken;
 
@@ -20,22 +15,22 @@ void match(int expected)
 {
     if (currenttoken.id == expected)
     {
-        // printf("success! %s is a %s\n", currenttoken.lexeme, tokennames[currenttoken.id]);
         currenttoken = gettoken();
     }
     else
     {
-        printf("syntax error at line %d: expected %s, got id=%d (%s)\n",
+        // print error message and set valid to 0
+        printf("Syntax error at line %d: expected %s, got id=%d (%s)\n",
                getlinenumber(), tokennames[expected], currenttoken.id, tokennames[currenttoken.id]);
         valid = 0;
-        // exit(1);
+        errors++;
     }
 }
 
 void prg()
 {
-    // printf("prg: over here...\n");
     valid = 1;
+    errors = 0;
     blk();
     match(EOF_S);
     if (valid)
@@ -64,7 +59,7 @@ void blk()
 
 void stm()
 {
-    // printf("stm: %s\n", tokennames[currenttoken.id]);
+    int before = errors;
     switch (currenttoken.id)
     {
     case IDENTIFIER:
@@ -72,7 +67,10 @@ void stm()
         match(ASSIGN);
         exp();
         match(SEMICOLON_S);
-        printf("Assignment Statement Recognized\n");
+        if (errors == before)
+        {
+            printf("Assignment Statement Recognized\n");
+        }
         break;
 
     case PRINT:
@@ -82,11 +80,14 @@ void stm()
         argfollow();
         match(RIGHTPAREN_S);
         match(SEMICOLON_S);
-        printf("Print Statement Recognized\n");
+        if (errors == before)
+        {
+            printf("Print Statement Recognized\n");
+        }
         break;
 
     case IF:
-        printf("If Statement Recognized\n");
+        printf("If Statement Begins\n");
         match(IF);
         cnd();
         match(COLON_S);
@@ -98,14 +99,13 @@ void stm()
     default:
         printf("Invalid Statement\n");
         valid = 0;
+        errors++;
         break;
-        // exit(1);
     }
 }
 
 void argfollow()
 {
-    // printf("argfollow %s\n", tokennames[currenttoken.id]);
     if (currenttoken.id == COMMA_S)
     {
         match(COMMA_S);
@@ -120,7 +120,6 @@ void argfollow()
 
 void arg()
 {
-    // printf("arg %s\n", tokennames[currenttoken.id]);
     if (currenttoken.id == STRING)
     {
         match(STRING);
@@ -133,7 +132,6 @@ void arg()
 
 void iffollow()
 {
-    // printf("iffollow %s\n", tokennames[currenttoken.id]);
     if (currenttoken.id == ENDIF)
     {
         match(ENDIF);
@@ -141,29 +139,32 @@ void iffollow()
     }
     else if (currenttoken.id == ELSE)
     {
+        int before = errors;
         match(ELSE);
         blk();
         match(ENDIF);
         match(SEMICOLON_S);
+        if (errors != before)
+        {
+            printf("Incomplete if Statement\n");
+        } 
     }
     else
     {
-        printf("Incomplete IF Statement\n");
+        printf("Incomplete if Statement\n");
         valid = 0;
-        // exit(1);
+        errors++;
     }
 }
 
 void exp()
 {
-    // printf("exp %s\n", tokennames[currenttoken.id]);
     trm();
     trmfollow();
 }
 
 void trmfollow()
 {
-    // printf("trmfollow %s\n", tokennames[currenttoken.id]);
     if (currenttoken.id == PLUS_S)
     {
         match(PLUS_S);
@@ -184,14 +185,12 @@ void trmfollow()
 
 void trm()
 {
-    // printf("trm %s\n", tokennames[currenttoken.id]);
     fac();
     facfollow();
 }
 
 void facfollow()
 {
-    // printf("facfollow %s\n", tokennames[currenttoken.id]);
     if (currenttoken.id == MULTIPLY)
     {
         match(MULTIPLY);
@@ -212,14 +211,12 @@ void facfollow()
 
 void fac()
 {
-    // printf("fac %s\n", tokennames[currenttoken.id]);
     lit();
     litfollow();
 }
 
 void litfollow()
 {
-    // printf("litfollow %s\n", tokennames[currenttoken.id]);
     if (currenttoken.id == RAISE)
     {
         match(RAISE);
@@ -234,7 +231,6 @@ void litfollow()
 
 void lit()
 {
-    // printf("lit %s\n", tokennames[currenttoken.id]);
     if (currenttoken.id == MINUS_S)
     {
         match(MINUS_S);
@@ -248,7 +244,6 @@ void lit()
 
 void val()
 {
-    // printf("val %s\n", tokennames[currenttoken.id]);
     switch (currenttoken.id)
     {
     case IDENTIFIER:
@@ -275,14 +270,13 @@ void val()
     default:
         printf("Invalid Value\n");
         valid = 0;
+        errors++;
         break;
-        // exit(1);
     }
 }
 
 void cnd()
 {
-    // printf("cnd %s\n", tokennames[currenttoken.id]);
     exp();
     rel();
     exp();
@@ -290,7 +284,6 @@ void cnd()
 
 void rel()
 {
-    // printf("rel %s\n", tokennames[currenttoken.id]);
     switch (currenttoken.id)
     {
     case LESSTHAN:
@@ -320,8 +313,8 @@ void rel()
     default:
         printf("Missing relational operator\n");
         valid = 0;
+        errors++;
         break;
-        // exit(1);
     }
 }
 
@@ -331,7 +324,6 @@ void parse(char *filename)
     openfile(filename);
     generatetable();
     generatetokennames();
-    printf("Starting Parse...\n");
     currenttoken = gettoken();
     prg();
 }
