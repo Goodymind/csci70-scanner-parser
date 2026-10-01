@@ -5,6 +5,8 @@
 #include "dirent.h"
 #include "parser.h"
 
+// checks if string has word input in it
+// returns index
 int find_input(char *str)
 {
     char *pos = strstr(str, "input");
@@ -13,6 +15,8 @@ int find_input(char *str)
     return (int)(pos - str);
 }
 
+// checks if string has word output in it
+// returns index
 int find_output(char *str)
 {
     char *pos = strstr(str, "output");
@@ -21,6 +25,7 @@ int find_output(char *str)
     return (int)(pos - str);
 }
 
+// checks if string has .txt at the end of it
 int is_txt_file(char *str)
 {
     size_t len = strlen(str);
@@ -29,6 +34,9 @@ int is_txt_file(char *str)
     return strcmp(str + len - 4, ".txt") == 0;
 }
 
+// checks if file is input by
+// - txt file
+// - does not have output in the name
 int isinputfile(char *filename)
 {
     size_t len = strlen(filename);
@@ -40,8 +48,10 @@ int isinputfile(char *filename)
     return is_txt_file(filename);
 }
 
+// builds output file name
 char *buildoutputfilename(int inputindex, char *filename)
 {
+    // if it has input in the name, replace with parser_output
     if (inputindex > -1)
     {
         const char *outputstr = "parser_output";
@@ -62,6 +72,7 @@ char *buildoutputfilename(int inputindex, char *filename)
 
         return buf; // freed by caller
     }
+    // if it does not have input in the name, append _parser_output before .txt
     else
     {
 
@@ -114,7 +125,7 @@ int main(int argc, char **argv)
                 perror("Failed to create output filename");
                 continue;
             }
-            
+            // redirect stdout to output file
             if (freopen(output, "w", stdout) == NULL)
             {
                 perror("Failed to redirect stdout");
