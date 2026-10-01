@@ -72,7 +72,6 @@ void generatetable()
     delta[7][DIGIT] = EXPONENTIAL;
     delta[EXPONENTIAL][DIGIT] = EXPONENTIAL;
 
-    // numbers- EXPECTED DIGIT
 
     // String
     delta[0][DOUBLEQOUTE] = 1;
@@ -90,12 +89,8 @@ void generatetable()
     for (int c = 0; c < OTHER + 1; c++)
     {
         delta[2][c] = 2; // ignore everything
-        // state 3 was also supposed to be used in here. but DFA simplified it and removed it
-        // might update 4 5 6 to 3 4 5 later. (probably not)
     }
-    // Ignore Comments
-    // delta[2][NEWLINE] = COMMENT;
-    // TODO: Edit DFA... or not?
+    // Ignore Comments instead of recognizing it as a token
     delta[2][NEWLINE] = 0;
     delta[2][EOF_C] = EOF_S;
 
@@ -152,10 +147,10 @@ char *_filename;
 
 int openfile(char *filename)
 {
-    // printf("scanner: opening %s\n", filename);
 
     if (file != NULL)
     {
+        // clean up old file
         fclose(file);
         file = NULL;
     }
@@ -167,18 +162,23 @@ int openfile(char *filename)
         printf("File not found.");
         exit(1);
     }
+
+    // reset values after opening a new file
     pushback = FALSE;
     lastch = 0;
     linenum = 0;
     return 0;
 }
 
+// get next character from input file, or return EOF if at end of file
 int mygetchar()
 {
+    // if pushback is true, return the last character read from the file
     if (pushback)
     {
         pushback = FALSE;
     }
+    // else, read the next character from the file
     else
     {
         lastch = fgetc(file);
@@ -190,11 +190,13 @@ int mygetchar()
     return lastch;
 }
 
+// helper function
 int getlinenumber()
 {
     return linenum;
 }
 
+// returns id of character class of c, or OTHER if c is not a recognized character
 int charclass(int c)
 {
     if (c == EOF)
@@ -253,15 +255,20 @@ int charclass(int c)
     }
 }
 
+// Errors defined in tokkennames array, return the error message for the given error number.
 const char *errormessage(int errnum)
 {
+    // if the error number is not in the range of defined errors, return a generic error message
+    // defined errors are from states 1 to 9 in the DFA.
+    // undefined errors are generic errors.
     if (errnum < 1 || errnum > 9)
     {
-        return "Error: Unknown";
+        return "Undefined error.";
     }
     return tokennames[errnum];
 }
 
+// returns the next token from the input file, or an error token if an error is encountered
 struct token gettoken()
 {
     int state = 0, prevstate;
@@ -283,6 +290,7 @@ struct token gettoken()
         }
         else if (state < ERROR && ch != EOF_C)
         {
+            // append the character to the lexeme
             buf[0] = c;
             strcat(temp.lexeme, buf);
         }
@@ -290,7 +298,8 @@ struct token gettoken()
 
     if (prevstate == 0)
     {
-        // required because a random character after state 0 would be pushback = true otherwise
+        // required because a random character after state 0 would make pushback true,
+        // entering an infinite loop of errors.
         buf[0] = lastchar;
         temp.lexeme[0] = buf[0]; // consume the offending characcter
         temp.lexeme[1] = '\0';
@@ -299,6 +308,7 @@ struct token gettoken()
     }
     else if (prevstate < 10)
     {
+        // defined errors
         pushback = TRUE;
         temp.id = prevstate;
         printf("Error at line %d: %s \"%s\"\n", getlinenumber(), errormessage(temp.id), temp.lexeme);
@@ -306,21 +316,16 @@ struct token gettoken()
     else if (prevstate == IDENTIFIER)
     {
         pushback = TRUE;
-        // TODO: Implement Keywords
-        // instead of temp.id = prevstate;
-        // keyword.id = check_keyword(temp.lexeme);
-        // if keyword.id == -1...
-        //   temp.id = IF
-
+        // check if identifier is used as a keyword, if so, 
+        // return the keyword token id instead of identifier token id.
         int keyword = check_keyword(temp.lexeme);
-
         if (keyword == -1)
         {
             temp.id = prevstate; // just an identifier
         }
         else
         {
-            temp.id = keyword;
+            temp.id = keyword; // keyword token id: IF, ELSE, ENDIF, etc...
         }
     }
     else
@@ -329,11 +334,11 @@ struct token gettoken()
         temp.id = prevstate;
     }
 
+    // Decimals and Exponentials are considered as numbers, not separate tokens.
     if (prevstate == DECIMAL || prevstate == EXPONENTIAL)
     {
         temp.id = NUMBER;
     }
 
-    // printf("scanner getting: %d %s\n", temp.id, tokennames[temp.id]);
     return temp;
 }

@@ -4,6 +4,7 @@
 #include "scanner.h"
 #include "dirent.h"
 
+// helper function that checks if input in the string exists.
 int find_input(char *str)
 {
     char *pos = strstr(str, "input");
@@ -12,6 +13,7 @@ int find_input(char *str)
     return (int)(pos - str);
 }
 
+// helper function that checks if output in the string exists.
 int find_output(char *str)
 {
     char *pos = strstr(str, "output");
@@ -20,6 +22,7 @@ int find_output(char *str)
     return (int)(pos - str);
 }
 
+// checks if it is a txt file (ends in .txt)
 int is_txt_file(char *str)
 {
     size_t len = strlen(str);
@@ -28,6 +31,9 @@ int is_txt_file(char *str)
     return strcmp(str + len - 4, ".txt") == 0;
 }
 
+// checks if the file is an input file by
+// - validating if it is a txt file
+// - it does not contain output.
 int isinputfile(char *filename)
 {
     size_t len = strlen(filename);
@@ -39,8 +45,10 @@ int isinputfile(char *filename)
     return is_txt_file(filename);
 }
 
+// build the output filename by replacing "input" with "scanner_output" in the input filename
 char *buildoutputfilename(int inputindex, char *filename)
 {
+    // if the word input is in the filename, replace with scanner_output.
     if (inputindex > -1)
     {
         const char *outputstr = "scanner_output";
@@ -61,6 +69,7 @@ char *buildoutputfilename(int inputindex, char *filename)
 
         return buf; // freed by caller
     }
+    // otherwise, append scanner_output to the filename before the .txt extension.
     else
     {
         
@@ -84,6 +93,7 @@ char *buildoutputfilename(int inputindex, char *filename)
     }
 }
 
+// run scanner module on the file.
 int scan(char *filename)
 {
     printf("Input: %s\n", filename);
@@ -94,7 +104,6 @@ int scan(char *filename)
     struct token t = gettoken();
     while (t.id != EOF_S)
     {
-        // TODO: Call tokennames here
         printf("%-40s%-40s\n", tokennames[t.id], t.lexeme);
         t = gettoken();
     }
@@ -113,24 +122,25 @@ int main(int argc, char **argv)
 
     struct dirent *de;
 
+    // get all files/folders in the current directory
     while ((de = readdir(dir)) != NULL)
     {
-        // filename = de->d_name;
+        // check if file is an input file.
         if (isinputfile(de->d_name))
         {
             int inputstringindex = find_input(de->d_name);
             char *output = buildoutputfilename(inputstringindex, de->d_name);
-            // printf("%s\n", output);
+            // redirect print stream to output file.
             if (freopen(output, "w", stdout) == NULL)
             {
                 perror("Failed to redirect stdout");
             }
 
             scan(de->d_name);
+            // free the output filename buffer.
             free(output);
         }
     }
     closedir(dir);
     return 0;
-    // scan(filename);
 }
