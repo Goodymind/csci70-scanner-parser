@@ -1,329 +1,97 @@
-#include <string.h>
-#include <stdio.h>
 #include <stdlib.h>
-#include "scanner.h"
-#include "parser.h"
-#include "token.h"
+#include <stdio.h>
+#include <string.h>
+#include "scan.h"
+#include "dirent.h"
+#include "parse.h"
 
-char *fname;
-int valid;
-int errors;
-
-struct token currenttoken;
-
-void match(int expected)
+// checks if string has word input in it
+// returns index
+int find_input(char *str)
 {
-    if (currenttoken.id == expected)
+    char *pos = strstr(str, "input");
+    if (pos == NULL)
+        return -1;
+    return (int)(pos - str);
+}
+
+// builds output file name
+char *buildoutputfilename(int inputindex, char *filename)
+{
+    // if it has input in the name, replace with parser_output
+    if (inputindex > -1)
     {
-        currenttoken = gettoken();
+        const char *outputstr = "parser_output";
+        const size_t in_len = 5; // strlen("input")
+
+        size_t len = strlen(filename) + 1;    // includes '\0'
+        size_t outputlen = strlen(outputstr); // NO null terminator
+
+        char *buf = malloc(len - in_len + outputlen);
+        if (buf == NULL)
+            return NULL;
+
+        memcpy(buf, filename, inputindex);
+        memcpy(buf + inputindex, outputstr, outputlen);
+        memcpy(buf + inputindex + outputlen,
+               filename + inputindex + in_len,
+               len - inputindex - in_len);
+
+        return buf; // freed by caller
     }
+    // if it does not have input in the name, append _parser_output before .txt
     else
     {
-        // print error message and set valid to 0
-        printf("Syntax error at line %d: expected %s, got id=%d (%s)\n",
-               getlinenumber(), tokennames[expected], currenttoken.id, tokennames[currenttoken.id]);
-        valid = 0;
-        errors++;
+
+        const char *outputstr = "_parser_output";
+
+        size_t len = strlen(filename) + 1;    // include \0
+        size_t outputlen = strlen(outputstr); // do not include \0
+
+        int target = len - 5;
+        // ".txt0";
+
+        char *buf = malloc(len + outputlen);
+
+        if (buf == NULL)
+            return NULL;
+
+        memcpy(buf, filename, target);
+        memcpy(buf + target, outputstr, outputlen);
+        memcpy(buf + target + outputlen,
+               filename + target, 5);
+
+        return buf;
     }
 }
 
-void prg()
+int main(int argc, char **argv)
 {
-    valid = 1;
-    errors = 0;
-    blk();
-    match(EOF_S);
-    if (valid)
+
+    if (argc != 2)
     {
-        printf("%s is a valid SimpCalc program\n", fname);
+        fprintf(stderr, "Usage: %s <input_file>\n", argv[0]);
+        return 1;
     }
-    else
+
+    char* filename = argv[1];
+
+    int inputstringindex = find_input(filename);
+
+    char *output = buildoutputfilename(inputstringindex, filename);
+
+    if (output == NULL)
     {
-        printf("%s is not a valid SimpCalc program\n", fname);
+        perror("Failed to create output filename");
     }
-}
-
-void blk()
-{
-    if (currenttoken.id == IDENTIFIER || currenttoken.id == PRINT || currenttoken.id == IF)
+    // redirect stdout to output file
+    if (freopen(output, "w", stdout) == NULL)
     {
-
-        stm();
-        blk();
+        perror("Failed to redirect stdout");
+        free(output);
     }
-    else
-    {
-        // epsilon
-    }
-}
 
-void stm()
-{
-    int before = errors;
-    switch (currenttoken.id)
-    {
-    case IDENTIFIER:
-        match(IDENTIFIER);
-        match(ASSIGN);
-        exp();
-        match(SEMICOLON_S);
-        if (errors == before)
-        {
-            printf("Assignment Statement Recognized\n");
-        }
-        break;
+    parse(filename);
 
-    case PRINT:
-        match(PRINT);
-        match(LEFTPAREN_S);
-        arg();
-        argfollow();
-        match(RIGHTPAREN_S);
-        match(SEMICOLON_S);
-        if (errors == before)
-        {
-            printf("Print Statement Recognized\n");
-        }
-        break;
-
-    case IF:
-        printf("If Statement Begins\n");
-        match(IF);
-        cnd();
-        match(COLON_S);
-        blk();
-        iffollow();
-        printf("If Statement Ends\n");
-        break;
-
-    default:
-        printf("Invalid Statement\n");
-        valid = 0;
-        errors++;
-        break;
-    }
-}
-
-void argfollow()
-{
-    if (currenttoken.id == COMMA_S)
-    {
-        match(COMMA_S);
-        arg();
-        argfollow();
-    }
-    else
-    {
-        // epsilon
-    }
-}
-
-void arg()
-{
-    if (currenttoken.id == STRING)
-    {
-        match(STRING);
-    }
-    else
-    {
-        exp();
-    }
-}
-
-void iffollow()
-{
-    if (currenttoken.id == ENDIF)
-    {
-        match(ENDIF);
-        match(SEMICOLON_S);
-    }
-    else if (currenttoken.id == ELSE)
-    {
-        int before = errors;
-        match(ELSE);
-        blk();
-        match(ENDIF);
-        match(SEMICOLON_S);
-        if (errors != before)
-        {
-            printf("Incomplete if Statement\n");
-        } 
-    }
-    else
-    {
-        printf("Incomplete if Statement\n");
-        valid = 0;
-        errors++;
-    }
-}
-
-void exp()
-{
-    trm();
-    trmfollow();
-}
-
-void trmfollow()
-{
-    if (currenttoken.id == PLUS_S)
-    {
-        match(PLUS_S);
-        trm();
-        trmfollow();
-    }
-    else if (currenttoken.id == MINUS_S)
-    {
-        match(MINUS_S);
-        trm();
-        trmfollow();
-    }
-    else
-    {
-        // epsilon
-    }
-}
-
-void trm()
-{
-    fac();
-    facfollow();
-}
-
-void facfollow()
-{
-    if (currenttoken.id == MULTIPLY)
-    {
-        match(MULTIPLY);
-        fac();
-        facfollow();
-    }
-    else if (currenttoken.id == DIVIDE)
-    {
-        match(DIVIDE);
-        fac();
-        facfollow();
-    }
-    else
-    {
-        // epsilon
-    }
-}
-
-void fac()
-{
-    lit();
-    litfollow();
-}
-
-void litfollow()
-{
-    if (currenttoken.id == RAISE)
-    {
-        match(RAISE);
-        lit();
-        litfollow();
-    }
-    else
-    {
-        // epsilon
-    }
-}
-
-void lit()
-{
-    if (currenttoken.id == MINUS_S)
-    {
-        match(MINUS_S);
-        val();
-    }
-    else
-    {
-        val();
-    }
-}
-
-void val()
-{
-    switch (currenttoken.id)
-    {
-    case IDENTIFIER:
-        match(IDENTIFIER);
-        break;
-
-    case NUMBER:
-        match(NUMBER);
-        break;
-
-    case SQRT:
-        match(SQRT);
-        match(LEFTPAREN_S);
-        exp();
-        match(RIGHTPAREN_S);
-        break;
-
-    case LEFTPAREN_S:
-        match(LEFTPAREN_S);
-        exp();
-        match(RIGHTPAREN_S);
-        break;
-
-    default:
-        printf("Invalid Value\n");
-        valid = 0;
-        errors++;
-        break;
-    }
-}
-
-void cnd()
-{
-    exp();
-    rel();
-    exp();
-}
-
-void rel()
-{
-    switch (currenttoken.id)
-    {
-    case LESSTHAN:
-        match(LESSTHAN);
-        break;
-
-    case EQUAL_S:
-        match(EQUAL_S);
-        break;
-
-    case GREATERTHAN:
-        match(GREATERTHAN);
-        break;
-
-    case LTEQUAL:
-        match(LTEQUAL);
-        break;
-
-    case NOTEQUAL:
-        match(NOTEQUAL);
-        break;
-
-    case GTEQUAL:
-        match(GTEQUAL);
-        break;
-
-    default:
-        printf("Missing relational operator\n");
-        valid = 0;
-        errors++;
-        break;
-    }
-}
-
-void parse(char *filename)
-{
-    fname = filename;
-    openfile(filename);
-    generatetable();
-    generatetokennames();
-    currenttoken = gettoken();
-    prg();
+    free(output);
 }
