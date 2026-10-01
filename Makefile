@@ -1,29 +1,32 @@
 token.o: token.c token.h
 	gcc -c token.c
 
-scanner.o: scanner.c token.h token.c
+scan.o: scan.c token.h token.c
+	gcc -c scan.c
+
+parse.o: parse.c token.h parse.h token.c scan.o
+	gcc -c parse.c
+
+scanner.o: scanner.c
 	gcc -c scanner.c
 
-parser.o: parser.c token.h parser.h token.c scanner.o
+parser.o: parser.c
 	gcc -c parser.c
 
-scan_tester.o: scan_tester.c
-	gcc -c scan_tester.c
+scanner.exe: scan.o scanner.o token.o
+	gcc -o scanner.exe scan.o scanner.o token.o -fsanitize=leak,address,undefined
 
-parse_tester.o: parse_tester.c
-	gcc -c parse_tester.c
+parser.exe: parse.o scanner.o token.o parser.o
+	gcc -o parser.exe parse.o scan.o token.o parser.o -fsanitize=leak,address,undefined
 
-scan_tester.exe: scan_tester.o scanner.o token.o
-	gcc -o scan_tester.exe scan_tester.o scanner.o token.o -fsanitize=leak,address,undefined
+scan: scanner.exe
+	./scanner.exe
 
-parse_tester.exe: parse_tester.o scanner.o token.o parser.o
-	gcc -o parse_tester.exe parse_tester.o scanner.o token.o parser.o -fsanitize=leak,address,undefined
+parse: parser.exe
+	./parser.exe sample1-quad-formula.txt
 
-test: sample/sample1-quad-formula.txt scan_tester.exe
-	./scan_tester.exe
-
-test_parse: parse_tester.exe
-	./parse_tester.exe
+parse-error: parser.exe
+	./parser.exe sample2-just-tokens.txt
 
 clean:
 	rm *.exe *.o *output.txt
